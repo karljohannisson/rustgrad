@@ -1,13 +1,13 @@
 use std::{fmt, ops};
 use std::rc::Rc;
 
-pub struct Value {
+pub struct Value<'a> {
     data: f64,
-    children: Option<(Rc<Value>, Rc<Value>)>,
+    children: Option<(Box<Value<'a>>, Box<Value<'a>>)>,
 }
 
-impl Value {
-    pub fn new(data: f64, children: Option<(Rc<Value>, Rc<Value>)>) -> Value {
+impl Value<'_> {
+    pub fn new<'a>(data: f64, children: Option<(Box<Value>, Box<Value>)>) -> Value<'a> {
         Value {
             data,
             children,
@@ -15,21 +15,21 @@ impl Value {
     }
 }
 
-impl ops::Add<Value> for Value {
-    type Output = Value;
+impl ops::Add<Value<'_>> for Value<'_> {
+    type Output<'a> = Value<'a>;
     fn add(self, _rhs: Value) -> Value {
-        Value::new(self.data + _rhs.data, Some((Rc::new(self), Rc::new(_rhs))))
+        Value::new(self.data + _rhs.data, Some((&self, &_rhs)))
     }
 }
 
-impl ops::Mul<Value> for Value {
-    type Output = Value;
+impl ops::Mul<Value<'_>> for Value<'_> {
+    type Output<'a> = Value<'a>;
     fn mul(self, _rhs: Value) -> Value {
-        Value::new(self.data * _rhs.data, Some((Rc::new(self), Rc::new(_rhs))))
+        Value::new(self.data * _rhs.data, Some((&'a self, &'a _rhs))
     }
 }
 
-impl fmt::Display for Value {
+impl fmt::Display for Value<'_> {
     fn fmt(&self, f:&mut fmt::Formatter) -> fmt::Result {
         write!(f, "Value={}", self.data)
     }
@@ -55,6 +55,14 @@ mod tests {
         let mut b = Value::new(3f64, None);
         let c=a*b;
         assert_eq!(c.data, 30f64);
+    }
+
+    #[test]
+    fn test_children() {
+        let mut a = Value::new(10f64, None);
+        let mut b = Value::new(3f64, None);
+        let c=a*b;
+        assert_eq!(c.children, Some(Rc::new((a, b))));
     }
 
 }
