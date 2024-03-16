@@ -1,4 +1,5 @@
-use std::{fmt, ops};
+use std::fmt;
+use std::ops::Add;
 
 pub struct Value {
     data: f64,
@@ -6,21 +7,22 @@ pub struct Value {
 }
 
 impl Value {
-    pub fn new<'a>(data: f64, children: Option<Box<Value>>) -> Value {
+    pub fn new(data: f64, children: Option<Value>) -> Value {
         Value {
             data,
-            children,
+            children: match children {
+                           None => None,
+                           Some(children) => Some(Box::new(children)),
+                              },
         }
     }
 }
 
-impl ops::Add<Value> for Value {
+impl Add for Value {
     type Output = Self;
-    fn add(self, _rhs: Value) -> Self {
-        Self {
-            data: self.data + &_rhs.data,
-            children: Some(Box::new(_rhs)),
-        }
+    fn add(self, _rhs: Self) -> Self {
+        Value::new(self.data + &_rhs.data, Some(self))
+
     }
 }
 
@@ -50,8 +52,8 @@ mod tests {
     fn test_children() {
         let a = Value::new(10f64, None);
         let b = Value::new(3f64, None);
-        let c=&a+&b;
-        assert_eq!(&c.children.unwrap().data, &a.data);
+        let c=a+b;
+        assert_eq!(c.children.unwrap().data, 10f64);
     }
 
 }
