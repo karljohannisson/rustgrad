@@ -3,25 +3,28 @@ use std::ops::{Add, Mul};
 
 pub struct Value {
     data: f64,
+    grad: f64,
     child_a: Option<Box<Value>>,
     child_b: Option<Box<Value>>,
-    op: char,
+    op: String,
 }
 
 impl Value {
     pub fn new(data: f64) -> Value {
         Value {
             data,
+            grad : 0f64,
             child_a: None,
             child_b: None,
-            op: ' ',
+            op: "".to_string(),
 
         }
     }
-    pub fn new_from_op(data:f64, child_a: Option<Value>, child_b: Option<Value>, op: char)
+    pub fn new_from_op(data:f64, child_a: Option<Value>, child_b: Option<Value>, op: String)
         -> Value {
             Value {
             data,
+            grad:0f64,
             child_a: match child_a {
                 None => None,
                 Some(child_a) =>
@@ -36,18 +39,28 @@ impl Value {
         }
     }
 
+    pub fn tanh(self) -> Self {
+        Value {
+            data:libm::tanh(self.data),
+            grad:0f64,
+            child_a: Some(Box::new(self)),
+            child_b: None,
+            op: "tanh".to_string(),
+        }
+    }
+
 }
 
 impl Add for Value {
     type Output = Self;
     fn add(self, rhs: Self) -> Self {
-        Value::new_from_op(self.data + rhs.data, Some(self), Some(rhs), '+')
+        Value::new_from_op(self.data + rhs.data, Some(self), Some(rhs), "+".to_string())
     }
 }
 impl Mul for Value {
     type Output = Self;
     fn mul(self, rhs: Self) -> Self {
-        Value::new_from_op(self.data * rhs.data, Some(self), Some(rhs), '*')
+        Value::new_from_op(self.data * rhs.data, Some(self), Some(rhs), "*".to_string())
     }
 }
 
@@ -95,7 +108,7 @@ mod tests {
         let a = Value::new(2.5f64);
         let b = Value::new(5f64);
         let c=a+b;
-        assert_eq!(c.op, '+');
+        assert_eq!(c.op, "+");
     }
 
     #[test]
@@ -103,7 +116,14 @@ mod tests {
         let a = Value::new(2.5f64);
         let b = Value::new(5f64);
         let c=a*b;
-        assert_eq!(c.op, '*');
+        assert_eq!(c.op, "*");
+    }
+
+    #[test]
+    fn test_tanh() {
+        let a = Value::new(0.7f64);
+        let b=a.tanh();
+        assert_eq!(b.data, 0.6043677771171634f64);
     }
 
 }
