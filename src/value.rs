@@ -25,16 +25,8 @@ impl Value {
             Value {
             data,
             grad:0f64,
-            child_a: match child_a {
-                None => None,
-                Some(child_a) =>
-                    Some(Box::new(child_a)),
-            },
-            child_b: match child_b {
-                None => None,
-                Some(child_b) =>
-                    Some(Box::new(child_b)),
-            },
+            child_a: child_a.map(Box::new),
+            child_b: child_b.map(Box::new),
             op,
         }
     }
